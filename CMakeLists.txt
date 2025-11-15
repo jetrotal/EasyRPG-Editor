@@ -7,6 +7,11 @@ project(EasyRPG_Editor VERSION 0.1.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 include(ConfigureWindows)
 
+# Force dynamic CRT to avoid unresolved __imp_* when mixing libs
+if(MSVC)
+ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE)
+endif()
+
 # C++17 is required
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -413,6 +418,12 @@ else()
 	target_link_libraries(${EXE_NAME} liblcf::liblcf)
 endif()
 
+# inih dependency (needed by liblcf when built with external INI parser)
+find_package(inih CONFIG QUIET)
+if(inih_FOUND)
+ target_link_libraries(${EXE_NAME} inih::inih)
+endif()
+
 # Libraries
 target_link_libraries(${EXE_NAME}
 	ZLIB::ZLIB
@@ -445,6 +456,29 @@ if(TARGET Qt6::lrelease)
 		COMMAND_EXPAND_LISTS VERBATIM)
 else()
 	message(STATUS "Disabling translation support")
+endif()
+
+# On Windows, deploy Qt runtime next to the built executable using windeployqt
+if(WIN32)
+ # Locate Qt bin dir via qmake and then find windeployqt
+ get_target_property(_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
+ if(_QMAKE_EXECUTABLE)
+ get_filename_component(_QT_BIN_DIR "${_QMAKE_EXECUTABLE}" DIRECTORY)
+ find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_QT_BIN_DIR}")
+ endif()
+
+ if(WINDEPLOYQT_EXECUTABLE)
+ add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+ COMMAND "${CMAKE_COMMAND}" -E echo "windeployqt on: $<TARGET_FILE:${EXE_NAME}> -> $<TARGET_FILE_DIR:${EXE_NAME}>"
+ COMMAND "${WINDEPLOYQT_EXECUTABLE}"
+ --no-compiler-runtime
+ --dir $<TARGET_FILE_DIR:${EXE_NAME}>
+ $<TARGET_FILE:${EXE_NAME}>
+ COMMENT "Deploying Qt runtime with windeployqt"
+ VERBATIM)
+ else()
+ message(WARNING "windeployqt not found. Qt runtime will not be auto-deployed.")
+ endif()
 endif()
 
 # Installation
