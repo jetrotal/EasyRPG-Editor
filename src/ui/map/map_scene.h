@@ -98,6 +98,8 @@ public slots:
     void undo();
     void redo();
 
+	void editEvent(int event_id);
+
 private slots:
 	void on_actionRunHere();
 

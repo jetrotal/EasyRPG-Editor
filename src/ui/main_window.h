@@ -58,6 +58,10 @@ private slots:
 
 	void on_actionMapTreeToggle_triggered(bool checked);
 
+	void on_actionEventsListToggle_triggered(bool checked);
+
+	void updateEventsList();
+
 	void on_actionResourceManager_triggered();
 
 	void on_actionDatabase_triggered();
@@ -133,6 +137,8 @@ private slots:
 	void on_actionMapDelete_triggered();
 
 	void on_actionMapProperties_triggered();
+
+	void on_treeEvents_itemDoubleClicked(QTreeWidgetItem* item, int column);
 
 	void on_actionSearch_triggered();
 

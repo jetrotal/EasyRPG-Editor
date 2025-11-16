@@ -440,6 +440,23 @@ void MapScene::redo()
     emit mapChanged();
 }
 
+void MapScene::editEvent(int event_id)
+{
+	std::vector<lcf::rpg::Event>::iterator ev;
+	for (ev = m_map->events.begin(); ev != m_map->events.end(); ++ev) {
+		if (ev->ID == event_id) {
+			lcf::rpg::Event backup = *ev;
+			int result = EventDialog::edit(m_view, *ev, m_project, this);
+			if (result != QDialogButtonBox::Cancel) {
+				m_undoStack->push(new UndoEvent(backup, *ev, this));
+				emit mapChanged();
+			}
+			redrawArea(Core::UPPER, ev->x, ev->y, ev->x, ev->y);
+			return;
+		}
+	}
+}
+
 void MapScene::on_actionCopy() {
     if (core().layer() == Core::EVENT) {
         on_actionCopyEvent();
@@ -604,6 +621,7 @@ void MapScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
             m_selectionTile->setVisible(true);
             m_selectionTile->setRect(QRectF(QRect(cur_x*core().tileSize(),cur_y*core().tileSize(),
                                                   core().tileSize(),core().tileSize())));
+			lcf::rpg::Event* selectedEvent = getEventAt(cur_x, cur_y);
             lcf::rpg::Event *selection = getEventAt(cur_x, cur_y);
             m_eventMenu->actions()[2]->setEnabled(!selection);
             m_eventMenu->actions()[3]->setEnabled(selection);

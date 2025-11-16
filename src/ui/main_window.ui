@@ -105,6 +105,7 @@
     </property>
     <addaction name="actionPaletteToggle"/>
     <addaction name="actionMapTreeToggle"/>
+    <addaction name="actionEventsListToggle"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -351,6 +352,66 @@
    <addaction name="actionMapPaste"/>
    <addaction name="separator"/>
    <addaction name="actionMapDelete"/>
+  </widget>
+  <widget class="QDockWidget" name="dockEventsList">
+   <property name="features">
+    <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::DockWidgetArea::LeftDockWidgetArea|Qt::DockWidgetArea::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Events List</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTreeWidget" name="treeEvents">
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+       <column>
+        <property name="text">
+         <string>ID</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Name</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>X</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Y</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <action name="actionProjectOpen">
    <property name="text">
@@ -854,6 +915,20 @@
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::TextHeuristicRole</enum>
+   </property>
+  </action>
+  <action name="actionEventsListToggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Events List</string>
+   </property>
+   <property name="statusTip">
+    <string>Show/Hide Events List window</string>
    </property>
   </action>
  </widget>

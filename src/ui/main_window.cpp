@@ -108,6 +108,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->setupUi(this);
 	refreshIcons();
 
+	addDockWidget(Qt::RightDockWidgetArea, ui->dockEventsList);
+	ui->treeEvents->setColumnHidden(0, true);
+	connect(ui->actionEventsListToggle, &QAction::triggered, ui->dockEventsList, &QWidget::setVisible);
+
     core().setRtpDir(m_settings.value(RTP_KEY, QString()).toString());
     if (core().rtpPath("").isEmpty())
         on_actionDebugRtpPath_triggered();
@@ -117,6 +121,14 @@ MainWindow::MainWindow(QWidget *parent) :
 	// Hide map ids
 	ui->treeMap->hideColumn(1);
 	// Created hardcoded toolbar for palette window.
+	addDockWidget(Qt::RightDockWidgetArea, ui->dockEventsList);
+	ui->treeEvents->setColumnHidden(0, false);
+	ui->treeEvents->setHeaderHidden(false);
+	ui->treeEvents->setSortingEnabled(true);
+	ui->treeEvents->sortByColumn(0, Qt::AscendingOrder);
+
+	connect(ui->actionEventsListToggle, &QAction::triggered, ui->dockEventsList, &QWidget::setVisible);
+
 	ui->widgetBar->layout()->addWidget(ui->toolBar);
 	ui->widgetBar2->layout()->addWidget(ui->toolBar2);
 	//Create dialogs
@@ -142,6 +154,7 @@ MainWindow::MainWindow(QWidget *parent) :
 			m_paletteScene,
             SLOT(onLayerChange()));
 	update_actions();
+	updateEventsList();
 	updateLayerActions();
 	updateToolActions();
 }
@@ -246,6 +259,7 @@ void MainWindow::LoadProject(QString foldername)
 		ui->tabMap->setCurrentWidget(view);
 	}*/
 	update_actions();
+	updateEventsList();
 }
 
 void MainWindow::closeProject() {
@@ -260,6 +274,7 @@ void MainWindow::closeProject() {
         core().project().reset();
 
         m_copiedMap.clear();
+		ui->treeEvents->clear();
 
         update_actions();
         setWindowTitle(tr("EasyRPG Editor"));
@@ -488,6 +503,14 @@ void MainWindow::on_actionMapTreeToggle_triggered(bool checked)
 		ui->dockMapTree->hide();
 }
 
+void MainWindow::on_actionEventsListToggle_triggered(bool checked)
+{
+	if (checked)
+		ui->dockEventsList->show();
+	else
+		ui->dockEventsList->hide();
+}
+
 void MainWindow::on_actionResourceManager_triggered()
 {
 	dlg_resource->show();
@@ -528,6 +551,7 @@ void MainWindow::update_actions()
 	ui->actionFullScreenToggle->setEnabled(has_project);
 	ui->actionLayerLower->setEnabled(has_project);
 	ui->actionLayerUpper->setEnabled(has_project);
+	ui->actionEventsListToggle->setEnabled(has_project);
 	ui->actionProjectNew->setEnabled(!has_project);
 	ui->actionPlayTest->setEnabled(has_project);
 	ui->actionMapSave->setEnabled(currentScene() && currentScene()->isModified());
@@ -864,6 +888,7 @@ void MainWindow::on_treeMap_itemDoubleClicked(QTreeWidgetItem *item, int column)
         currentScene()->setCurrentMapEvents(currentScene()->mapEvents());
         currentScene()->redrawMap();
         m_paletteScene->onChipsetChange(currentScene()->sharePainterTiles());
+		updateEventsList();
     } else {
         QMessageBox::critical(
             this,
@@ -914,6 +939,7 @@ void MainWindow::on_tabMap_currentChanged(int index)
 	{
         ui->actionUndo->setEnabled(currentScene() && currentScene()->canUndo());
         ui->actionRedo->setEnabled(currentScene() && currentScene()->canRedo());
+		updateEventsList();
 		ui->actionMapSave->setEnabled(currentScene()->isModified());
 		ui->actionMapRevert->setEnabled(currentScene()->isModified());
         currentScene()->redrawMap();
@@ -1340,6 +1366,42 @@ void MainWindow::on_actionAboutQt_triggered()
     QMessageBox::aboutQt(this);
 }
 
+void MainWindow::updateEventsList()
+{
+	ui->treeEvents->clear();
+	if (!currentScene()) {
+		return;
+	}
+
+	auto* map = currentScene()->map();
+	for (const auto& event : map->events) {
+		QTreeWidgetItem* item = new QTreeWidgetItem();
+
+		item->setData(0, Qt::DisplayRole, event.ID); 
+		item->setText(1, ToQString(event.name));
+		item->setData(2, Qt::DisplayRole, event.x);
+		item->setData(3, Qt::DisplayRole, event.y);
+
+		item->setData(0, Qt::UserRole, event.ID);
+
+		ui->treeEvents->addTopLevelItem(item);
+	}
+
+	for (int i = 0; i < ui->treeEvents->columnCount(); ++i) {
+		ui->treeEvents->resizeColumnToContents(i);
+	}
+}
+
+void MainWindow::on_treeEvents_itemDoubleClicked(QTreeWidgetItem* item, int column)
+{
+	Q_UNUSED(column);
+	if (!currentScene() || !item) {
+		return;
+	}
+	int eventId = item->data(0, Qt::UserRole).toInt();
+	currentScene()->editEvent(eventId);
+}
+
 void MainWindow::updateSearchUI()
 {
 	searchdialog->updateUI();
@@ -1390,6 +1452,7 @@ void MainWindow::refreshIcons() {
 	set(ui->actionZoomOut, "zoom-out");
 	set(ui->actionPaletteToggle, "palette");
 	set(ui->actionMapTreeToggle, "tree");
+	set(ui->actionEventsListToggle, "layer-event");
 
 	// Tilemap
 	set(ui->actionDrawPen, "draw-pen");
